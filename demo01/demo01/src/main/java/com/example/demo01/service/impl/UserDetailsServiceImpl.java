@@ -5,12 +5,14 @@ import com.example.demo01.entity.LoginUser;
 import com.example.demo01.entity.User;
 import com.example.demo01.mapper.MenuMapper;
 import com.example.demo01.mapper.UserMapper;
+import com.example.demo01.service.PermissionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -22,8 +24,6 @@ import java.util.Objects;
  * @Package com.example.demo01.service.impl
  * @Date 2023/11/2 8:56
  * @description:
- *//**
- * @Author 三更  B站： https://space.bilibili.com/663528522
  */
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
@@ -34,18 +34,30 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Autowired
     private MenuMapper menuMapper;
 
+    @Autowired
+    private PermissionService permissionService;
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        //判断用户表中是否有该用户
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(User::getUserName,username);
         User user = userMapper.selectOne(wrapper);
-        if(Objects.isNull(user)){
-            throw new RuntimeException("22222222222222");
-        }
-//        获得该用户的所有权限
-        List<String> permissionKeyList = menuMapper.selectPermsByUserId(user.getId());
-//        //测试写法
-//        List<String> list = new ArrayList<>(Arrays.asList("test"));
-        return new LoginUser(user,permissionKeyList);
+        return createLoginUser(user);
+    }
+
+    public  LoginUser createLoginUser(User user){
+        //在这里创建返回需要的loginUser并且查询用户的所有权限
+        return new LoginUser(user,permissionService.getRolePermision(user));
     }
 }
+
+
+
+
+
+
+
+
+
+

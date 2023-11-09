@@ -12,5 +12,7 @@ import com.example.demo01.entity.User;
  */
 public interface LoginServcie {
     ResponseResult login(User user);
+
+
     ResponseResult logout();
 }

@@ -32,7 +32,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!--        mysql 的驱动依赖  和mybatisplus-->
+        <!--        mysql 的驱动和mybatisplus依赖-->
 
         <dependency>
             <groupId>mysql</groupId>

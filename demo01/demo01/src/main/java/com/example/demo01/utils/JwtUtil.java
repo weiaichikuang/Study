@@ -1,47 +1,101 @@
 package com.example.demo01.utils;
 
 
+import com.example.demo01.entity.LoginUser;
+import com.mysql.cj.util.StringUtils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import javax.servlet.http.HttpServletRequest;
 import java.security.Key;
-import java.util.Base64;
-import java.util.Date;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * JWT工具类
  */
+@Component
 public class JwtUtil {
 
+    @Autowired
+    private RedisCache redisCache;
+
     //有效期为
-    public static final Long JWT_TTL = 60 * 60 *1000L;// 60 * 60 *1000  一个小时
+    public static final Long JWT_TTL = 60 * 60 * 1000L;// 60 * 60 *1000  一个小时
     //设置秘钥明文
     public static final String JWT_KEY = "cikmcikmcikmcikmcikmcikmcikmcikmcikmcikmcikm";
 
-    public static String getUUID(){
+    public static String getUUID() {
         String token = UUID.randomUUID().toString().replaceAll("-", "");
         return token;
     }
 
     /**
      * 生成jtw
-     * @param subject token中要存放的数据（json格式）
+     *
+     * @param claims token中要存放的数据（json格式）  是一个键值对  login_user_key：uuid
      * @return
      */
-    public static String createJWT(String subject) {
-        JwtBuilder builder = getJwtBuilder(subject, null, getUUID());// 设置过期时间
-        return builder.compact();
+    public static String createJWT(Map<String, Object> claims) {
+//        JwtBuilder builder = getJwtBuilder(subject, null, getUUID());// 设置过期时间
+
+        String token = Jwts.builder()
+                .setClaims(claims)  //将信息封装进token中
+                .signWith(SignatureAlgorithm.HS256, generalKey()).compact();
+        return token;
     }
 
     /**
+     * 生成token
+     *
+     * @param loginUser
+     * @return
+     */
+    public  String createToken(LoginUser loginUser) {
+        String userKey = UUID.randomUUID().toString();
+        loginUser.setToken(userKey);
+//        将loginUser以token中的uuid存入redis中去
+        redisCache.setCacheObject(userKey,loginUser);
+//        将uuid传入到下一级根据uuid去生成一个token
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("login_user_key", userKey);
+        return JwtUtil.createJWT(claims);
+    }
+
+
+    /**
+     * 解析前端传入的token获取用户信息
+     */
+    public LoginUser getLoginUser(String token ){
+        Claims claims = Jwts.parser()
+                .setSigningKey(JWT_KEY)
+                .parseClaimsJws(token)
+                .getBody();
+
+        // 解析对应的权限以及用户信息
+        //获取到了claims就是封装token时的map
+        String uuid = (String) claims.get("login_user_key");
+        LoginUser user = redisCache.getCacheObject(uuid);
+        System.out.println("log jwtUtil:"+ user);
+        return user;
+
+    }
+
+
+
+
+
+    /**
      * 生成jtw
-     * @param subject token中要存放的数据（json格式）
+     *
+     * @param subject   token中要存放的数据（json格式）
      * @param ttlMillis token超时时间
      * @return
      */
@@ -55,8 +109,8 @@ public class JwtUtil {
         SecretKey secretKey = generalKey();
         long nowMillis = System.currentTimeMillis();
         Date now = new Date(nowMillis);
-        if(ttlMillis==null){
-            ttlMillis=JwtUtil.JWT_TTL;
+        if (ttlMillis == null) {
+            ttlMillis = JwtUtil.JWT_TTL;
         }
         long expMillis = nowMillis + ttlMillis;
         Date expDate = new Date(expMillis);
@@ -73,15 +127,16 @@ public class JwtUtil {
      * jwt
      * 的学习试试
      */
-    public static String getJwtStudy(){
+    public static String getJwtStudy() {
         Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
         String jws = Jwts.builder().setSubject("NB").signWith(key).compact();
-        System.out.println("jwtutils-getjwtstudy"+jws);
+        System.out.println("jwtutils-getjwtstudy" + jws);
         return getJwtStudy();
     }
 
     /**
      * 创建token
+     *
      * @param id
      * @param subject
      * @param ttlMillis
@@ -100,6 +155,7 @@ public class JwtUtil {
 
     /**
      * 生成加密后的秘钥 secretKey
+     *
      * @return
      */
     public static SecretKey generalKey() {
@@ -122,6 +178,5 @@ public class JwtUtil {
                 .parseClaimsJws(jwt)
                 .getBody();
     }
-
 
 }

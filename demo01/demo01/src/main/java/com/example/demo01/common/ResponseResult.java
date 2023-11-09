@@ -1,7 +1,13 @@
 package com.example.demo01.common;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-
+/**
+ * @Title: ResponseResult
+ * @Author 陈友强
+ * @Package com.example.demo01.common
+ * @Date 2023/11/2 8:42
+ * @description:  统一返回信息
+ */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ResponseResult<T> {
     /**

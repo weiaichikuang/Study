@@ -21,10 +21,27 @@ public class LoginUser implements UserDetails {
     //存储权限信息
     private List<String> permissions;
 
+    /**
+     *
+     *  用户的唯一标识
+     */
+    private String token;
 
-    public LoginUser(User user,List<String> permissions) {
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    public LoginUser(User user, List<String> permissions) {
         this.user = user;
         this.permissions = permissions;
+    }
+    public LoginUser(User user) {
+        this.user = user;
+
     }
 
 
@@ -44,11 +61,12 @@ public class LoginUser implements UserDetails {
         return authorities;
     }
 
+//    获取密码
     @Override
     public String getPassword() {
         return user.getPassword();
     }
-
+//    获取用户名
     @Override
     public String getUsername() {
         return user.getUserName();

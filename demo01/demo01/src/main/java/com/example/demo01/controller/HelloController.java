@@ -13,11 +13,18 @@ import org.springframework.web.bind.annotation.RestController;
  * @description:
  */
 @RestController
-public class HelloController {
+@RequestMapping("/hello")
 
-    @RequestMapping("/hello")
-    @PreAuthorize("hasAuthority('test')")
+public class HelloController {
+    @PreAuthorize("hasAuthority('system:book:list')")
+    @RequestMapping("/111")
     public String hello(){
         return "hello";
+    }
+
+    @PreAuthorize("hasAuthority('system:book:info')")
+    @RequestMapping("/222")
+    public String hello2(){
+        return "hello222";
     }
 }
